@@ -429,11 +429,9 @@ const PriceHistoryChart: React.FC = () => {
   };
 
   // Update data source text
-  const renderDataSourceInfo = () => {
-    if (isLoading) return 'Loading...';
-    if (error) return 'Data unavailable';
-    return 'Data source: CoinGecko';
-  }
+  const getDataSourceText = () => {
+    return 'Data source: Binance';
+  };
 
   // Handle chart click for mobile devices
   const handleChartClickMobile = (data: any) => {
@@ -500,7 +498,7 @@ const PriceHistoryChart: React.FC = () => {
       >
         {/* Data source indicator - repositioned to top-right */}
         <div className="absolute top-2 right-2 text-xs text-gray-500 bg-gray-900/70 px-2 py-1 rounded-md backdrop-blur-sm z-10">
-          {renderDataSourceInfo()}
+          {getDataSourceText()}
           {isLiveUpdating && (
             <span className="inline-flex items-center ml-1">
               • <Wifi className="h-3 w-3 text-green-500 ml-1 animate-pulse" />
