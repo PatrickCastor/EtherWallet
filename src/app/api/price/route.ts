@@ -59,62 +59,31 @@ export async function GET(request: Request) {
         priceData = await getHistoricalPriceData(parseFloat(days));
       }
       
-      // Validate the data
-      if (!priceData || !Array.isArray(priceData) || priceData.length === 0) {
-        throw new Error('Invalid or empty price data received');
-      }
+      // Cache the data
+      cache.set(cacheKey, {
+        data: priceData,
+        timestamp: now,
+        days
+      });
       
-      // Ensure all data points have valid date and price
-      priceData = priceData.filter(point => 
-        point && 
-        typeof point.date === 'string' && 
-        !isNaN(point.price) && 
-        point.price > 0
-      );
-      
-      // If we still have valid data after filtering
-      if (priceData.length > 0) {
-        // Cache the data
-        cache.set(cacheKey, {
-          data: priceData,
-          timestamp: now,
-          days
-        });
-        
-        // Clean up old cache entries
-        for (const [key, value] of cache.entries()) {
-          const ttlToUse = key === 'max' ? MAX_RANGE_CACHE_TTL : DEFAULT_CACHE_TTL;
-          if (now - value.timestamp > ttlToUse) {
-            cache.delete(key);
-          }
+      // Clean up old cache entries
+      for (const [key, value] of cache.entries()) {
+        const ttlToUse = key === 'max' ? MAX_RANGE_CACHE_TTL : DEFAULT_CACHE_TTL;
+        if (now - value.timestamp > ttlToUse) {
+          cache.delete(key);
         }
-        
-        return NextResponse.json({
-          status: 'success',
-          data: priceData,
-          lastUpdated: new Date().toISOString(),
-          source: 'binance'
-        });
-      } else {
-        // If filtering removed all data points, throw an error to use fallback
-        throw new Error('No valid price data points after filtering');
       }
+      
+      return NextResponse.json({
+        status: 'success',
+        data: priceData,
+        lastUpdated: new Date().toISOString(),
+        source: 'binance'
+      });
     } catch (error) {
       console.error('Error fetching price data from Binance:', error);
       
-      // Check if we have cached data that's not too old (24 hours)
-      const EXTENDED_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
-      if (cachedData && (now - cachedData.timestamp) < EXTENDED_CACHE_TTL) {
-        console.log(`Using extended cached price data for ${days === 'max' ? 'ALL time' : days + ' days'}`);
-        return NextResponse.json({
-          status: 'success',
-          data: cachedData.data,
-          lastUpdated: new Date(cachedData.timestamp).toISOString(),
-          source: 'extended_cache'
-        });
-      }
-      
-      // Use fallback data if API fails and no extended cache is available
+      // Use fallback data if API fails
       if (days === 'max') {
         // Generate a reasonable amount of fallback data for "ALL" view
         priceData = generateFallbackPriceData(365 * 2); // 2 years of data as fallback
@@ -131,18 +100,13 @@ export async function GET(request: Request) {
     }
   } catch (error) {
     console.error('Error in price API route:', error);
-    
-    // Generate minimal fallback data for any unexpected errors
-    const fallbackData = generateFallbackPriceData(30); // Default to 30 days
-    
     return NextResponse.json(
       { 
-        status: 'success', 
-        data: fallbackData,
-        lastUpdated: new Date().toISOString(),
-        source: 'error_fallback',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      }
+        status: 'error', 
+        error: 'Failed to fetch price data',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      },
+      { status: 500 }
     );
   }
 } 

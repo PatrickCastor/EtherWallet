@@ -114,12 +114,6 @@ const PriceHistoryChart: React.FC = () => {
             throw new Error(`Failed to fetch price data: ${response.statusText}`);
           }
           const data = await response.json();
-          
-          // Validate the data
-          if (!data || !data.data || !Array.isArray(data.data) || data.data.length === 0) {
-            throw new Error('Invalid or empty price data received from API');
-          }
-          
           return data.data;
         },
         {
@@ -133,73 +127,15 @@ const PriceHistoryChart: React.FC = () => {
         }
       );
       
-      if (result && Array.isArray(result) && result.length > 0) {
-        // Ensure all data points have valid date and price
-        const validatedData = result.filter(point => 
-          point && 
-          typeof point.date === 'string' && 
-          !isNaN(point.price) && 
-          point.price > 0
-        );
-        
-        if (validatedData.length > 0) {
-          setData(validatedData);
-          setLastUpdated(new Date().toISOString());
-          setIsLoading(false);
-        } else {
-          throw new Error('No valid data points after filtering');
-        }
-      } else {
-        throw new Error('Invalid data structure received');
+      if (result) {
+        setData(result);
+        setLastUpdated(new Date().toISOString());
+        setIsLoading(false);
       }
     } catch (err) {
       // Error handling is done by the apiNotification hook
       setIsLoading(false);
-      
-      // If we have no data at all, generate fallback data
-      if (data.length === 0) {
-        const fallbackData = generateFallbackData(selectedTimeRange);
-        setData(fallbackData);
-        setLastUpdated(new Date().toISOString());
-        showNotification('Using fallback data due to API error', 'warning');
-      }
     }
-  };
-  
-  // Generate fallback data for the chart when API fails
-  const generateFallbackData = (range: TimeRange): PriceData[] => {
-    const now = Date.now();
-    const data: PriceData[] = [];
-    const basePrice = 3000; // Base ETH price
-    
-    let days = 30;
-    switch (range) {
-      case '1H': days = 1/24; break;
-      case '4H': days = 4/24; break;
-      case '1D': days = 1; break;
-      case '1W': days = 7; break;
-      case '1M': days = 30; break;
-      case '3M': days = 90; break;
-      case 'ALL': days = 365; break;
-    }
-    
-    // Calculate appropriate interval based on time range
-    const points = range === '1H' || range === '4H' ? 60 : 100;
-    const interval = (days * 24 * 60 * 60 * 1000) / points;
-    
-    for (let i = 0; i < points; i++) {
-      const time = now - (days * 24 * 60 * 60 * 1000) + (i * interval);
-      // Create some random price movement
-      const randomFactor = 0.98 + (Math.random() * 0.04); // Random factor between 0.98 and 1.02
-      const price = basePrice * randomFactor * (1 + Math.sin(i / 48) * 0.05);
-      
-      data.push({
-        date: new Date(time).toISOString(),
-        price: parseFloat(price.toFixed(2))
-      });
-    }
-    
-    return data;
   };
 
   // Updated setupWebSocket function to use notifications

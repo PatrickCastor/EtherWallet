@@ -70,9 +70,6 @@ const EthereumStatsCards = () => {
           circulatingSupply: data.market_data.circulating_supply,
           lastUpdated: new Date().toISOString()
         })
-        
-        // Reset countdown after fetch attempt
-        setRefreshCountdown(10)
       } catch (apiError: unknown) {
         console.error('Error fetching from CoinGecko API, using fallback data:', 
           apiError instanceof Error && apiError.name === 'AbortError' ? 'timeout' : apiError);
@@ -94,12 +91,15 @@ const EthereumStatsCards = () => {
           circulatingSupply: 120620000,
           lastUpdated: new Date().toISOString()
         })
-      } finally {
-        setIsLoading(false)
       }
+      
+      // Reset countdown after fetch attempt
+      setRefreshCountdown(10)
+      
     } catch (err) {
       console.error('Error in fetchEthereumStats:', err)
       setError('Failed to load Ethereum statistics')
+    } finally {
       setIsLoading(false)
     }
   }

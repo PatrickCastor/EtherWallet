@@ -407,41 +407,35 @@ export async function getDailyTransactionStats(days: number = 10) {
 
 export async function getEthPriceHistory(days: number = 30) {
   try {
-    // Calculate interval based on number of days
-    let interval = '1h'; // Default to 1 hour intervals
-    if (days <= 1) {
-      interval = '5m'; // 5 minute intervals for 1 day or less
-    } else if (days > 30) {
-      interval = '1d'; // Daily intervals for more than 30 days
-    }
-
-    // Calculate start time
-    const endTime = Date.now();
-    const startTime = endTime - (days * 24 * 60 * 60 * 1000);
-
-    // Fetch data from Binance API
-    const response = await axios.get('https://api.binance.com/api/v3/klines', {
-      params: {
-        symbol: 'ETHUSDT',
-        interval: interval,
-        startTime: startTime,
-        endTime: endTime,
-        limit: 1000 // Maximum allowed by Binance
-      },
-      timeout: 10000 // 10 second timeout
-    });
-
-    if (!response.data || !Array.isArray(response.data)) {
-      throw new Error('Invalid response from Binance API');
+    // Use CoinGecko API to get ETH price history
+    const response = await axios.get(
+      `https://api.coingecko.com/api/v3/coins/ethereum/market_chart`, {
+        params: {
+          vs_currency: 'usd',
+          days: days,
+          interval: days <= 1 ? 'minute' : days <= 7 ? 'hourly' : 'daily'
+        },
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'Crypto Dashboard Application'
+        },
+        timeout: 10000 // 10 second timeout
+      }
+    );
+    
+    if (!response.data || !response.data.prices) {
+      throw new Error('Invalid response from CoinGecko API');
     }
     
-    // Process the data
-    // Binance klines format: [openTime, open, high, low, close, volume, closeTime, ...]
-    const priceData = response.data.map((item: any) => ({
-      date: new Date(item[0]).toISOString(),
-      price: parseFloat(item[4]) // Using close price
-    }));
-
+    // Format the data for our chart
+    const priceData = response.data.prices.map((item: [number, number]) => {
+      const date = new Date(item[0]);
+      return {
+        date: date.toISOString(),
+        price: parseFloat(item[1].toFixed(2))
+      };
+    });
+    
     return priceData;
   } catch (error: any) {
     console.error('Error fetching ETH price history:', error);
