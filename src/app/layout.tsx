@@ -14,10 +14,12 @@ const inter = Inter({
 import { Navigation } from "../components/navigation"
 import { Footer } from "../components/footer"
 
-
 export const metadata: Metadata = {
-  title: "NodeFlow",
-  description: "Visualize and explore blockchain transaction networks",
+  title: "NodeFlow - Ethereum Blockchain Explorer",
+  description: "A comprehensive Ethereum blockchain explorer and wallet analytics platform",
+  icons: {
+    icon: "/favicon.ico"
+  }
 }
 
 export default function RootLayout({
