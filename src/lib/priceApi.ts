@@ -18,115 +18,73 @@ let reconnectTimeout: NodeJS.Timeout | null = null;
 let pingInterval: NodeJS.Timeout | null = null;
 
 /**
- * Fetches historical ETH price data from Binance API
+ * Fetches historical ETH price data from CoinGecko API
  * @param days Number of days of historical data to fetch
  * @returns Array of price data points
  */
 export async function getHistoricalPriceData(days: number): Promise<PriceData[]> {
   try {
-    // Calculate interval based on number of days
-    let interval = '1h'; // Default to 1 hour intervals
-    if (days <= 1) {
-      interval = '5m'; // 5 minute intervals for 1 day or less
-    } else if (days > 30) {
-      interval = '1d'; // Daily intervals for more than 30 days
-    }
-
-    // For complete history (when days is very large), use multiple requests
-    if (days > 1000) {
-      return await getCompleteEthHistory();
-    }
-
-    // Calculate start time
-    const endTime = Date.now();
-    const startTime = endTime - (days * 24 * 60 * 60 * 1000);
-
-    // Fetch data from Binance API
-    const response = await axios.get('https://api.binance.com/api/v3/klines', {
-      params: {
-        symbol: 'ETHUSDT',
-        interval: interval,
-        startTime: startTime,
-        endTime: endTime,
-        limit: 1000 // Maximum allowed by Binance
+    // Use CoinGecko API instead of Binance
+    const response = await axios.get(
+      `https://api.coingecko.com/api/v3/coins/ethereum/market_chart`, {
+        params: {
+          vs_currency: 'usd',
+          days: days,
+          interval: days <= 1 ? 'minute' : days <= 7 ? 'hourly' : 'daily'
+        },
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'NodeFlow Ethereum Explorer'
+        }
       }
-    });
+    );
 
-    // Process the data
-    // Binance klines format: [openTime, open, high, low, close, volume, closeTime, ...]
-    const priceData: PriceData[] = response.data.map((item: any) => ({
+    if (!response.data || !response.data.prices) {
+      throw new Error('Invalid response from CoinGecko API');
+    }
+
+    // Format the data for our chart
+    const priceData: PriceData[] = response.data.prices.map((item: [number, number]) => ({
       date: new Date(item[0]).toISOString(),
-      price: parseFloat(item[4]) // Using close price
+      price: parseFloat(item[1].toFixed(2))
     }));
 
     return priceData;
   } catch (error) {
     console.error('Error fetching historical price data:', error);
-    throw error;
+    // Use fallback data if API fails
+    return generateFallbackPriceData(days);
   }
 }
 
 /**
- * Fetches complete ETH price history from Binance API using multiple requests
- * @returns Array of price data points covering the entire ETH history
+ * Fetches the current ETH price from CoinGecko
+ * @returns Current ETH price in USD
  */
-async function getCompleteEthHistory(): Promise<PriceData[]> {
+export async function getCurrentPrice(): Promise<number> {
   try {
-    const allData: PriceData[] = [];
-    // Use current time to ensure we get the latest data
-    let endTime = Date.now();
-    let hasMoreData = true;
-    
-    while (hasMoreData) {
-      // Fetch data in chunks of 1000 daily candles
-      const response = await axios.get('https://api.binance.com/api/v3/klines', {
+    const response = await axios.get(
+      'https://api.coingecko.com/api/v3/simple/price',
+      {
         params: {
-          symbol: 'ETHUSDT',
-          interval: '1d',
-          endTime: endTime,
-          limit: 1000
+          ids: 'ethereum',
+          vs_currencies: 'usd'
+        },
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'NodeFlow Ethereum Explorer'
         }
-      });
-      
-      if (!response.data || !Array.isArray(response.data) || response.data.length === 0) {
-        hasMoreData = false;
-        break;
       }
-      
-      // Process this batch of data
-      const batchData = response.data.map((item: any) => ({
-        date: new Date(item[0]).toISOString(),
-        price: parseFloat(item[4]) // Using close price
-      }));
-      
-      // Add to our collection
-      allData.unshift(...batchData);
-      
-      // Update endTime for next batch - make sure we don't get duplicate data
-      endTime = new Date(batchData[0].date).getTime() - 24 * 60 * 60 * 1000;
-      
-      // Add a small delay to avoid rate limiting
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      // If we've gone back far enough (before ETH listing on Binance), stop
-      if (endTime < new Date('2017-07-01').getTime()) {
-        hasMoreData = false;
-      }
+    );
+
+    if (!response.data?.ethereum?.usd) {
+      throw new Error('Invalid response format');
     }
-    
-    // Apply sampling to reduce data points for better performance
-    // Sample every 5th point for the complete history
-    const sampledData = allData.filter((_, index) => index % 5 === 0);
-    
-    // Make sure we include the most recent data point
-    if (allData.length > 0 && sampledData[sampledData.length - 1] !== allData[allData.length - 1]) {
-      sampledData.push(allData[allData.length - 1]);
-    }
-    
-    return sampledData;
+
+    return response.data.ethereum.usd;
   } catch (error) {
-    console.error('Error fetching complete ETH history:', error);
-    return generateFallbackPriceData(365 * 2); // 2 years of fallback data
+    console.error('Error fetching current price:', error);
+    throw new Error('Failed to fetch current price');
   }
 }
 
@@ -136,54 +94,47 @@ function getSharedWebSocketConnection(): WebSocket {
     return activeWebSocket;
   }
   
-  // Close any existing connection that's not open
+  // Close any existing connection
   if (activeWebSocket) {
     closeWebSocketConnection();
   }
   
-  // Create a new connection
-  const ws = new WebSocket('wss://stream.binance.com:9443/ws/ethusdt@ticker');
+  // Create a new connection using alternative WebSocket endpoint
+  const ws = new WebSocket('wss://ws.coincap.io/prices?assets=ethereum');
   
-  // Reset connection attempts on successful connection
   ws.onopen = () => {
     console.log('WebSocket connection established');
     connectionAttempts = 0;
     
-    // Set up a ping interval to keep the connection alive
     if (pingInterval) clearInterval(pingInterval);
     pingInterval = setInterval(() => {
       if (ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ method: 'ping' }));
+        ws.send(JSON.stringify({ type: 'ping' }));
       }
-    }, 30000); // Send ping every 30 seconds
+    }, 30000);
   };
   
-  // Handle incoming messages and distribute to all callbacks
   ws.onmessage = (event) => {
     try {
       const data = JSON.parse(event.data);
       
-      // Handle ping response or ticker data
-      if (data.pong) {
-        console.log('Received pong from server');
-        return;
-      }
-      
-      // Extract the current price
-      const currentPrice = parseFloat(data.c);
-      if (isNaN(currentPrice)) {
-        console.warn('Received invalid price data', data);
-        return;
-      }
-      
-      // Call all registered callbacks with the new price
-      activeCallbacks.forEach(callback => {
-        try {
-          callback(currentPrice);
-        } catch (err) {
-          console.error('Error in price update callback:', err);
+      // CoinCap format is different from Binance
+      if (data.ethereum) {
+        const currentPrice = parseFloat(data.ethereum);
+        if (isNaN(currentPrice)) {
+          console.warn('Received invalid price data', data);
+          return;
         }
-      });
+        
+        // Call all registered callbacks with the new price
+        activeCallbacks.forEach(callback => {
+          try {
+            callback(currentPrice);
+          } catch (err) {
+            console.error('Error in price update callback:', err);
+          }
+        });
+      }
     } catch (error) {
       console.error('Error processing WebSocket message:', error);
     }
@@ -302,25 +253,6 @@ export function setupRealtimePriceUpdates(onUpdate: (price: number) => void): ()
       closeWebSocketConnection();
     }
   };
-}
-
-/**
- * Fetches the current ETH price
- * @returns Current ETH price in USD
- */
-export async function getCurrentPrice(): Promise<number> {
-  try {
-    const response = await axios.get('https://api.binance.com/api/v3/ticker/price', {
-      params: {
-        symbol: 'ETHUSDT'
-      }
-    });
-    
-    return parseFloat(response.data.price);
-  } catch (error) {
-    console.error('Error fetching current price:', error);
-    throw new Error('Failed to fetch current price');
-  }
 }
 
 /**
