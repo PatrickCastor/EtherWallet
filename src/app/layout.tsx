@@ -3,6 +3,7 @@ import "@/app/globals.css"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import { NotificationProvider } from "@/lib/notification-context"
+import { TooltipProvider } from "@/components/ui/tooltip"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -28,11 +29,13 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} font-sans`}>
       <body className={inter.className}>
         <NotificationProvider>
-          <div className="min-h-screen bg-[#000410]">
-            <Navigation />
-            {children}
-            <Footer />
-          </div>
+          <TooltipProvider>
+            <div className="min-h-screen bg-[#000410]">
+              <Navigation />
+              {children}
+              <Footer />
+            </div>
+          </TooltipProvider>
         </NotificationProvider>
       </body>
     </html>

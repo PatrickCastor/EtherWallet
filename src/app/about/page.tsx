@@ -256,7 +256,7 @@ export default function AboutPage() {
               <div className="bg-white/5 rounded-lg shadow-lg overflow-hidden transition-all duration-300 hover:scale-105 hover:bg-white/10">
                 <div className="aspect-w-1 aspect-h-1 relative overflow-hidden">
                   <Image
-                    src="/GiaHuy.jpg?height=400&width=400"
+                    src="/GiaHuy.JPG?height=400&width=400"
                     alt="Team member"
                     width={400}
                     height={400}
