@@ -391,7 +391,7 @@ function TransactionsContent() {
               </div>
               <div className="flex w-full md:w-auto gap-2 mt-2 md:mt-0">
                 <button
-                  className={`flex-1 md:w-24 h-10 bg-green-700 text-white rounded-md hover:bg-green-600 transition-all duration-300 flex items-center justify-center ${
+                  className={`flex-1 md:w-24 h-10 bg-green-700 text-white rounded-md hover:bg-green-600 transition-all duration-300 flex items-center justify-center hover:cursor-pointer ${
                     isLoading || searchCooldown || !searchTerm ? "opacity-50 cursor-not-allowed" : ""
                   }`}
                   onClick={() => handleSearch(searchTerm)}
@@ -407,7 +407,7 @@ function TransactionsContent() {
                 </button>
                 <button
                   className={`flex-1 md:w-24 h-10 bg-red-700 text-white rounded-md hover:bg-red-600 transition-all duration-300 flex items-center justify-center ${
-                    searchTerm ? "opacity-100" : "opacity-50 cursor-not-allowed"
+                    searchTerm ? "opacity-100 cursor-pointer" : "opacity-50 cursor-not-allowed"
                   }`}
                   onClick={handleClear}
                   disabled={!searchTerm}

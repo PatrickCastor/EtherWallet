@@ -17,6 +17,11 @@ interface Transaction {
   to: string
 }
 
+interface CopiedState {
+  address: string;
+  index: number;
+}
+
 /**
  * LatestTransactions Component
  * 
@@ -30,7 +35,7 @@ const LatestTransactions: React.FC = () => {
   const [error, setError] = useState<string | null>(null)
   const [lastUpdated, setLastUpdated] = useState<string | null>(null)
   const [retryCount, setRetryCount] = useState(0)
-  const [copiedAddress, setCopiedAddress] = useState<string | null>(null)
+  const [copiedState, setCopiedState] = useState<CopiedState | null>(null)
   const { showNotification } = useNotification()
   
   // Add a flag to track if component is mounted
@@ -77,10 +82,10 @@ const LatestTransactions: React.FC = () => {
     return fallbackTxs
   }
 
-  const copyToClipboard = (address: string) => {
+  const copyToClipboard = (address: string, index: number) => {
     navigator.clipboard.writeText(address)
       .then(() => {
-        setCopiedAddress(address);
+        setCopiedState({ address, index });
         showNotification(
           `${NOTIFICATION_MESSAGES.ADDRESS_COPIED} (${address.substring(0, 6)}...${address.slice(-4)})`, 
           'success', 
@@ -89,7 +94,7 @@ const LatestTransactions: React.FC = () => {
         // Reset copied state after 2 seconds
         setTimeout(() => {
           if (isMountedRef.current) {
-            setCopiedAddress(null)
+            setCopiedState(null)
           }
         }, 2000);
       })
@@ -194,7 +199,7 @@ const LatestTransactions: React.FC = () => {
           <button 
             onClick={handleManualRefresh} 
             disabled={isLoading}
-            className="text-xs bg-gray-800 hover:bg-gray-700 text-white px-2 py-1 rounded-md transition-colors disabled:opacity-50 flex items-center"
+            className="text-xs bg-gray-800 hover:bg-gray-700 text-white px-2 py-1 rounded-md transition-colors disabled:opacity-50 hover:cursor-pointer flex items-center"
           >
             {isLoading ? (
               <>
@@ -272,21 +277,16 @@ const LatestTransactions: React.FC = () => {
                       From: {transaction.from ? `${transaction.from.substring(0, 6)}...` : 'Unknown'}
                     </a>
                     <button
-                      onClick={() => copyToClipboard(transaction.from)}
-                      className="ml-1 px-1.5 py-0.5 bg-gray-800 hover:bg-gray-700 rounded-md text-xs transition-colors flex items-center"
+                      onClick={() => copyToClipboard(transaction.from, index)}
+                      className="group flex items-center space-x-1 text-gray-400 hover:text-[#4ADE80] transition-colors hover:cursor-pointer"
                       title="Copy wallet address"
                     >
-                      {copiedAddress === transaction.from ? (
-                        <>
-                          <Check className="h-3 w-3 mr-1 text-green-400" />
-                          <span>Copied!</span>
-                        </>
+                      {copiedState?.address === transaction.from && copiedState?.index === index ? (
+                        <Check className="h-4 w-4" />
                       ) : (
-                        <>
-                          <Clipboard className="h-3 w-3 mr-1" />
-                          <span>Copy</span>
-                        </>
+                        <Clipboard className="h-4 w-4" />
                       )}
+                      <span>Copy</span>
                     </button>
                   </span>
                 </div>
@@ -303,21 +303,16 @@ const LatestTransactions: React.FC = () => {
                         To: {transaction.to.substring(0, 6)}...
                       </a>
                       <button
-                        onClick={() => copyToClipboard(transaction.to)}
-                        className="ml-1 px-1.5 py-0.5 bg-gray-800 hover:bg-gray-700 rounded-md text-xs transition-colors flex items-center"
+                        onClick={() => copyToClipboard(transaction.to, index)}
+                        className="group flex items-center space-x-1 text-gray-400 hover:text-[#4ADE80] transition-colors hover:cursor-pointer"
                         title="Copy wallet address"
                       >
-                        {copiedAddress === transaction.to ? (
-                          <>
-                            <Check className="h-3 w-3 mr-1 text-green-400" />
-                            <span>Copied!</span>
-                          </>
+                        {copiedState?.address === transaction.to && copiedState?.index === index ? (
+                          <Check className="h-4 w-4" />
                         ) : (
-                          <>
-                            <Clipboard className="h-3 w-3 mr-1" />
-                            <span>Copy</span>
-                          </>
+                          <Clipboard className="h-4 w-4" />
                         )}
+                        <span>Copy</span>
                       </button>
                     </span>
                   </div>

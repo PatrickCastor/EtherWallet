@@ -152,7 +152,7 @@ const LatestBlocks: React.FC = () => {
           <button 
             onClick={handleManualRefresh} 
             disabled={isLoading}
-            className="text-xs bg-gray-800 hover:bg-gray-700 text-white px-2 py-1 rounded-md transition-colors disabled:opacity-50 flex items-center"
+            className="text-xs bg-gray-800 hover:bg-gray-700 text-white px-2 py-1 rounded-md transition-colors disabled:opacity-50 hover:cursor-pointer flex items-center"
           >
             {isLoading ? (
               <>

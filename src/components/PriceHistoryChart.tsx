@@ -389,11 +389,10 @@ const PriceHistoryChart: React.FC = () => {
   const TimeRangeButton = ({ range, current }: { range: TimeRange, current: TimeRange }) => (
     <button
       onClick={() => handleTimeRangeChange(range)}
-      disabled={isLoading}
-      className={`px-3 py-1 text-xs rounded-md transition-colors ${
-        range === current 
-          ? 'bg-[#4ADE80] text-black font-medium' 
-          : 'bg-gray-800 text-gray-300 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed'
+      className={`px-3 py-1 rounded-md text-sm font-medium transition-colors hover:cursor-pointer ${
+        range === current
+          ? 'bg-[#4ADE80] text-black'
+          : 'bg-[#1E2631] text-gray-400 hover:bg-[#2A3441] hover:text-white'
       }`}
     >
       {range}
@@ -520,10 +519,20 @@ const PriceHistoryChart: React.FC = () => {
                 setRetryCount(0);
                 fetchPriceHistory();
               }}
-              className="mt-2 px-3 py-1 bg-gray-800 hover:bg-gray-700 text-white rounded-md text-sm flex items-center disabled:opacity-50"
+              disabled={isLoading}
+              className="text-xs bg-gray-800 hover:bg-gray-700 text-white px-2 py-1 rounded-md transition-colors disabled:opacity-50 hover:cursor-pointer flex items-center"
             >
-              <RefreshCw className="h-3 w-3 mr-1" />
-              Retry
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                  Refreshing...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="h-3 w-3 mr-1" />
+                  Refresh
+                </>
+              )}
             </button>
           </div>
         ) : data.length > 0 ? (
