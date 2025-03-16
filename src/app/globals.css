@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+:root {
+  --background: #000410;
+  --card-background: #0b1017;
+  --border-color: #1e2631;
+  --text-primary: #ffffff;
+  --text-secondary: #9ca3af;
+  --accent: #4ade80;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--text-primary);
+  font-family: "Inter", "Inter Fallback", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Chart styles */
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line {
+  stroke: var(--border-color);
+}
+
+.recharts-text {
+  fill: var(--text-secondary);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
