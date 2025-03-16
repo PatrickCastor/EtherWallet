@@ -1,57 +1,36 @@
-# NodeFlow - Ethereum Blockchain Explorer
-
-A comprehensive Ethereum blockchain explorer and wallet analytics platform that provides real-time insights, transaction visualization, and powerful tracking tools.
-
-## Features
-
-- **Real-time Price Tracking**: Live ETH price updates and historical price charts
-- **Transaction Monitoring**: Track and visualize Ethereum transactions in real-time
-- **Block Explorer**: View detailed information about the latest blocks
-- **Wallet Analytics**: Analyze wallet activities and transaction patterns
-- **Interactive Visualizations**: Explore blockchain data through intuitive graph visualizations
-
-## Tech Stack
-
-- **Frontend**: Next.js 15.2.2, React, TailwindCSS
-- **Database**: Neo4j for graph data storage
-- **APIs**: Integration with Etherscan, Binance, and CoinGecko
-- **Real-time Updates**: WebSocket connections for live data
-- **UI Components**: Custom-built components with modern design
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
 
-1. Clone the repository:
-```bash
-git clone https://github.com/PatrickCastor/EthWallet.git
-```
+First, run the development server:
 
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Run the development server:
 ```bash
 npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
 ```
 
-4. Open [http://localhost:3000](http://localhost:3000) in your browser
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-## Project Timeline
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-- Q1 2023: Project Inception
-- Q2 2023: Frontend Development
-- Q3 2023: Backend Integration
-- Q4 2023: Beta Launch
-- Q1 2024: Full Release
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## Team
+## Learn More
 
-- **Truong Dang Kien** - Project Lead
-- **Le Quoc Duy** - Backend Developer
-- **Dong Nguyen Gia Huy** - Frontend Developer
-- **Nguyen Tan Phat** - UX Researcher
+To learn more about Next.js, take a look at the following resources:
 
-## License
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-This project is licensed under the MIT License.
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+
+## Deploy on Vercel
+
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
