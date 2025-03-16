@@ -41,25 +41,48 @@ export async function getHistoricalPriceData(days: number): Promise<PriceData[]>
     const endTime = Date.now();
     const startTime = endTime - (days * 24 * 60 * 60 * 1000);
 
-    // Fetch data from Binance API
-    const response = await axios.get('https://api.binance.com/api/v3/klines', {
-      params: {
-        symbol: 'ETHUSDT',
-        interval: interval,
-        startTime: startTime,
-        endTime: endTime,
-        limit: 1000 // Maximum allowed by Binance
+    // Try different Binance API endpoints in case of regional restrictions
+    const endpoints = [
+      'https://api.binance.com',
+      'https://api1.binance.com',
+      'https://api2.binance.com',
+      'https://api3.binance.com'
+    ];
+
+    let lastError = null;
+    
+    // Try each endpoint until one works
+    for (const baseEndpoint of endpoints) {
+      try {
+        const response = await axios.get(`${baseEndpoint}/api/v3/klines`, {
+          params: {
+            symbol: 'ETHUSDT',
+            interval: interval,
+            startTime: startTime,
+            endTime: endTime,
+            limit: 1000 // Maximum allowed by Binance
+          },
+          timeout: 5000 // 5 second timeout
+        });
+
+        // Process the data
+        const priceData: PriceData[] = response.data.map((item: any) => ({
+          date: new Date(item[0]).toISOString(),
+          price: parseFloat(item[4]) // Using close price
+        }));
+
+        return priceData;
+      } catch (error: any) {
+        lastError = error;
+        console.warn(`Failed to fetch from ${baseEndpoint}:`, error.message);
+        // Continue to next endpoint
+        continue;
       }
-    });
+    }
 
-    // Process the data
-    // Binance klines format: [openTime, open, high, low, close, volume, closeTime, ...]
-    const priceData: PriceData[] = response.data.map((item: any) => ({
-      date: new Date(item[0]).toISOString(),
-      price: parseFloat(item[4]) // Using close price
-    }));
-
-    return priceData;
+    // If all endpoints failed, throw the last error
+    console.error('All Binance endpoints failed:', lastError);
+    throw lastError;
   } catch (error) {
     console.error('Error fetching historical price data:', error);
     throw error;
